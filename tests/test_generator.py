@@ -17,7 +17,7 @@ def test_shape(base, maze):
 
 
 def test_border_walls(maze):
-    assert numpy.all(maze[0, :] == -1)
-    assert numpy.all(maze[-1, :] == -1)
-    assert numpy.all(maze[:0] == -1)
-    assert numpy.all(maze[:, -1] == -1)
+    assert numpy.all(maze[0, :] == -1)  # upper wall
+    assert numpy.all(maze[-1, :] == -1) # bottom wall
+    assert numpy.all(maze[:0] == -1)    # left wall
+    assert numpy.all(maze[:, -1] == -1) # right wall

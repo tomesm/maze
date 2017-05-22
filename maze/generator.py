@@ -1,6 +1,23 @@
 import numpy
 from numpy.random import random_integers as rand
-import matplotlib.pyplot as pyplot
+
+
+def generate_maze(width=81, height=51, complexity=0.75, density=0.75):
+    """ Convert the maze to required format """
+    # We ned walls marked as negative numbers so we need to re-type the base
+    maze = generate_base_maze(width, height, complexity, density).astype(int)
+    # rewrite walls as -1
+    maze[maze == 1] = -1
+    # non-negatives (zeros in this case) are cells so no need to customize
+    # set target at random cell
+    cells = numpy.where(maze == 0)
+    target = numpy.random.randint(0, len(cells[0]))
+    # set target coordinates inside sells arrays
+    target_x = cells[0][target]
+    target_y = cells[1][target]
+    maze[target_x, target_y] = 1
+    return maze
+
 
 def generate_base_maze(width=81, height=51, complexity=0.75, density=0.75):
     """ Let's just re-use a generator from Wikipeida:
@@ -41,18 +58,3 @@ def generate_base_maze(width=81, height=51, complexity=0.75, density=0.75):
                     x, y = x_, y_
     return Z
 
-def generate_maze(width=81, height=51, complexity=0.75, density=0.75):
-    """ Convert the maze to required format """
-    # We ned walls marked as negative numbers so we need to re-type the base
-    maze = generate_base_maze(width, height, complexity, density).astype(int)
-    # rewrite walls as -1
-    maze[maze == 1] = -1
-    # non-negatives (zeros in this case) are cells so no need to customize
-    # set target at random cell
-    cells = numpy.where(maze == 0)
-    target = numpy.random.randint(0, len(cells[0]))
-    # set target coordinates inside sells arrays
-    target_x = cells[0][target]
-    target_y = cells[1][target]
-    maze[target_x, target_y] = 1
-    return maze

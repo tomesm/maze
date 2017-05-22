@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 
 setup(
-    name='pymaze',
+    name='maze',
     version='0.1',
     description='Maze generator and solver.',
     author='Martin Tomes',
