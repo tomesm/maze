@@ -1,13 +1,14 @@
-from setuptools import setup, find_packages
-
+from setuptools import setup
+from Cython.Build import cythonize
+import numpy
+import glob
 
 setup(
     name='maze',
-    version='0.1',
-    description='Maze generator and solver.',
-    author='Martin Tomes',
-    author_email='tomesm@gmail.com',
-    license='Public Domain',
-    url='https://github.com/tomesm/pymaze',
-    py_modules=find_packages(),
+    ext_modules=cythonize(glob.glob('maze/*.pyx'), language_level=3, include_dirs=[numpy.get_include()]),
+    include_dirs=[numpy.get_include()],
+    install_requires=[
+        'Cython',
+        'NumPy',
+    ],
 )
