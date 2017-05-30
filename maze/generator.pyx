@@ -16,7 +16,7 @@ cdef extern from "time.h":
 cdef int randint(int limit):
     return rand() % limit
 
-def generate_maze(int width=81, int height=51, int complexity=0.75, int density=0.75):
+def generate_maze(int width=81, int height=51, double complexity=0.75, double density=0.75):
     """ Convert the maze to required format """
     # We ned walls marked as negative numbers so we need to re-type the base
     maze = generate_base_maze(width, height, complexity, density).astype(int)
@@ -33,7 +33,7 @@ def generate_maze(int width=81, int height=51, int complexity=0.75, int density=
     return maze
 
 
-cpdef numpy.ndarray[numpy.int8_t, ndim=2] generate_base_maze(int width=81, int height=51, int complexity=0.75, int density=0.75):
+cpdef numpy.ndarray[numpy.int8_t, ndim=2] generate_base_maze(int width=81, int height=51, double complexity=0.75, double density=0.75):
     """ Let's just re-use a generator from Wikipeida:
 
             Source: https://en.wikipedia.org/wiki/Maze_generation_algorithm
@@ -42,20 +42,20 @@ cpdef numpy.ndarray[numpy.int8_t, ndim=2] generate_base_maze(int width=81, int h
     """
     # Only odd shapes
     cdef numpy.ndarray[numpy.int_t, ndim=1] shape = numpy.empty(2, dtype=numpy.int)
-    shape = ((int height // 2) * 2 + 1, (int width // 2) * 2 + 1)
+    shape = ((height // 2) * 2 + 1, (width // 2) * 2 + 1)
     # Adjust complexity and density relative to maze size
-    cdef int complexity = int(complexity * (5 * (shape[0] + shape[1])))
-    cdef int density = int(density * ((shape[0] // 2) * (shape[1] // 2)))
+    cdef int icomplexity = int(complexity * (5 * (shape[0] + shape[1])))
+    cdef int idensity = int(density * ((shape[0] // 2) * (shape[1] // 2)))
     # Build actual maze
     cdef numpy.ndarray[numpy.int8_t, ndim=2] Z = numpy.zeros(shape, dtype=bool)
     # Fill borders
     Z[0, :] = Z[-1, :] = 1
     Z[:, 0] = Z[:, -1] = 1
     # Make aisles
-    for i in range(density):
-        x, y = randint(0, shape[1] // 2) * 2, randint(0, shape[0] // 2) * 2
+    for i in range(idensity):
+        x, y = randint(shape[1] // 2) * 2, randint(shape[0] // 2) * 2
         Z[y, x] = 1
-        for j in range(complexity):
+        for j in range(icomplexity):
             neighbours = []
             if x > 1:
                 neighbours.append((y, x - 2))
@@ -66,7 +66,7 @@ cpdef numpy.ndarray[numpy.int8_t, ndim=2] generate_base_maze(int width=81, int h
             if y < shape[0] - 2:
                 neighbours.append((y + 2, x))
             if len(neighbours):
-                y_, x_ = neighbours[randint(0, len(neighbours) - 1)]
+                y_, x_ = neighbours[randint(len(neighbours) - 1)]
                 if Z[y_, x_] == 0:
                     Z[y_, x_] = 1
                     Z[y_ + (y - y_) // 2, x_ + (x - x_) // 2] = 1
