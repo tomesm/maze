@@ -213,9 +213,9 @@ def analyze(maze):
 
 
 def main():
-    maze = generate_maze(300, 300)
+    maze = generate_maze(14, 14)
     solution = analyze(maze)
     print(solution.distances)
     print(solution.directions)
     print(solution.is_reachable)
-    print(solution.path(1, 2))
+    print(solution.path(column=3,row=8))
