@@ -213,7 +213,7 @@ def analyze(maze):
 
 
 def main():
-    maze = generate_maze(14, 7)
+    maze = generate_maze(300, 300)
     solution = analyze(maze)
     print(solution.distances)
     print(solution.directions)
