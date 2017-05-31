@@ -1,2 +1,2 @@
-# pymaze
-A Python maze generator and solver.
+# maze
+A Python/Cython maze generator and solver.
