@@ -26,7 +26,8 @@ cpdef numpy.ndarray[numpy.int8_t, ndim=2] generate_maze(int width=81,int height=
     """
     # Only odd shapes
     cdef numpy.ndarray[numpy.int_t, ndim=1] shape = numpy.empty(2, dtype=numpy.int)
-    shape = ((height // 2) * 2 + 1, (width // 2) * 2 + 1)
+    shape[0] = (height // 2) * 2 + 1
+    shape[1] = (width // 2) * 2 + 1
     # Adjust complexity and density relative to maze size
     cdef int icomplexity = int(complexity * (5 * (shape[0] + shape[1])))
     cdef int idensity = int(density * ((shape[0] // 2) * (shape[1] // 2)))
