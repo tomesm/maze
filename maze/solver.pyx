@@ -210,12 +210,3 @@ class Solution:
 
 def analyze(maze):
     return Solution(maze)
-
-
-def main():
-    maze = generate_maze(14, 14)
-    solution = analyze(maze)
-    print(solution.distances)
-    print(solution.directions)
-    print(solution.is_reachable)
-    print(solution.path(column=3,row=8))
