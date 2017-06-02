@@ -83,70 +83,94 @@ class GridWidget(QtWidgets.QWidget):
 
 
 
+class MazeGui(object):
+    """ Class representing maze GUI """
+    def __init__(self):
+        """ Init all neded stuff """
+        self.app = QtWidgets.QApplication([]) # init app
+        self.window = window = QtWidgets.QMainWindow() # set main GUI window
+        self.array = maze.generator.generate_maze(COLUMNS,ROWS)
+        self.new_dialog = None
 
-def main():
-    app = QtWidgets.QApplication([])
-    window = QtWidgets.QMainWindow()
+        with open(get_filename('ui/MainWindow.ui')) as file:
+            uic.loadUi(file, window)
 
-    with open(get_filename('ui/MainWindow.ui')) as file:
-        uic.loadUi(file, window)
+        self.scroll_area = window.findChild(QtWidgets.QScrollArea, 'scrollArea')
+        self.grid = grid = GridWidget(self.array)
+        self.scroll_area.setWidget(grid)
 
-    def new_dialog():
-        dialog = QtWidgets.QDialog(window)
+        self.palette = window.findChild(QtWidgets.QListWidget, 'listWidget')
+
+        item = QtWidgets.QListWidgetItem('Grass')
+        icon = QtGui.QIcon('img/grass.svg')
+        item.setIcon(icon)
+        item.setData(VALUE_ROLE, 0)
+        self.palette.addItem(item)
+
+        item = QtWidgets.QListWidgetItem('Wall')
+        icon = QtGui.QIcon('img/wall.svg')
+        item.setIcon(icon)
+        item.setData(VALUE_ROLE, -1)
+        self.palette.addItem(item)
+        # TODO: writ function for adding items
+
+        self.palette.itemSelectionChanged.connect(self._item_activated)
+        # v gridu musi byt nejaka prednastavena hodnota na zacatku
+        # prednastavime zed jako defaultni
+        self.palette.setCurrentRow(1)
+
+        self._action('actionNew').triggered.connect(self._new_dialog)
+
+
+
+
+
+    def _action(self, name):
+        return self.window.findChild(QtWidgets.QAction, name)
+
+
+    def _item_activated(self):
+        for item in self.palette.selectedItems():
+            self.grid.selected = item.data(VALUE_ROLE)
+
+    def _new_dialog():
+        self.new_dialog = dialog = QtWidgets.QDialog(self.window)
+        dialog.setModal(True)
 
         with open(get_filename('ui/newmaze.ui')) as file:
             uic.loadUi(file, dialog)
 
-        result = dialog.exec()
+        dialog.show()
+        dialog.finished.connect(self._new_finished)
 
-        if result == QtWidgets.QDialog.Rejected:
+
+    def _new_finished(self, result):
+        dialog = self.new_dialog
+        self.new_dialog =  None
+
+        if not result:
+            dialog.destroy()
             return
 
         # vyberu si konkretni widget a zavolan value
         cols = dialog.findChild(QtWidgets.QSpinBox, 'spinWidth').value()
         rows = dialog.findChild(QtWidgets.QSpinBox, 'spinHeight').value()
+        dialog.destroy()
 
-        grid.array = maze.generator.generate_maze(cols, rows)
+        self.array = self.grid.array = maze.generator.generate_maze(cols, rows)
         # tohle v init tohoto gridu
-        size = logical_to_pixels(*array.shape)
-        grid.setMinimumSize(*size)
-        grid.setMaximumSize(*size)
-        grid.resize(*size)
-        grid.update()
+        size = logical_to_pixels(*self.array.shape)
+        self.grid.setMinimumSize(*size)
+        self.grid.setMaximumSize(*size)
+        self.grid.resize(*size)
+        self.grid.update()
 
 
-    action = window.findChild(QtWidgets.QAction, 'actionNew')
-    action.triggered.connect(new_dialog)
-    array = maze.generator.generate_maze(15,15)
-    scroll_area = window.findChild(QtWidgets.QScrollArea, 'scrollArea')
-    grid = GridWidget(array)
-    scroll_area.setWidget(grid)
+    def run(self):
+        self.window.show()
+        return self.app.exec_()
 
-    palette = window.findChild(QtWidgets.QListWidget, 'listWidget')
 
-    item = QtWidgets.QListWidgetItem('Grass')
-    icon = QtGui.QIcon('img/grass.svg')
-    item.setIcon(icon)
-    item.setData(VALUE_ROLE, 0)
-    palette.addItem(item)
-
-    item = QtWidgets.QListWidgetItem('Wall')
-    icon = QtGui.QIcon('img/wall.svg')
-    item.setIcon(icon)
-    item.setData(VALUE_ROLE, -1)
-    palette.addItem(item)
-    # TODO: writ function for adding items
-
-    def item_activated():
-        for item in palette.selectedItems():
-            grid.selected = item.data(VALUE_ROLE)
-
-    palette.itemSelectionChanged.connect(item_activated)
-    # v gridu musi byt nejaka prednastavena hodnota na zacatku
-    # prednastavime zed jako defaultni
-    palette.setCurrentRow(1)
-
-    window.show()
-    return app.exec()
-
-main()
+def main():
+    gui = MazeGui()
+    return gui.run()
