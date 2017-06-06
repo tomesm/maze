@@ -102,13 +102,13 @@ class MazeGui(object):
         self.palette = window.findChild(QtWidgets.QListWidget, 'listWidget')
 
         item = QtWidgets.QListWidgetItem('Grass')
-        icon = QtGui.QIcon('img/grass.svg')
+        icon = QtGui.QIcon(get_filename('img/grass.svg'))
         item.setIcon(icon)
         item.setData(VALUE_ROLE, 0)
         self.palette.addItem(item)
 
         item = QtWidgets.QListWidgetItem('Wall')
-        icon = QtGui.QIcon('img/wall.svg')
+        icon = QtGui.QIcon(get_filename('img/wall.svg'))
         item.setIcon(icon)
         item.setData(VALUE_ROLE, -1)
         self.palette.addItem(item)
