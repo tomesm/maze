@@ -19,7 +19,7 @@ class Solution():
         """ """
         if self.maze[row, column, 1] == '#' or\
                 self.maze[row, column, 1] == ' ':
-            raise Throwception("Cell not reachable. ")
+            raise Exception("Cell not reachable.")
 
         path = []
         coordinates = (row, column)
@@ -71,30 +71,30 @@ def analyze(array):
             # are not walls in the same time
             # first, try go up
             if (maze[cell_up][1] == ' ' and  # is a path
-                    maze[cell_up][0] == '-1'):  # and not visited before
-
-                    maze[cell_up][1] = 'v' # set direction
-                    maze[cell_up][0] = str(int(cell[0]) + 1) # compute distance
-                    starting_cell.append(list(cell_up))
+                    maze[cell_up][0] == '-1'
+               ):  # and not visited before
+                maze[cell_up][1] = 'v' # set direction
+                maze[cell_up][0] = str(int(cell[0]) + 1) # compute distance
+                starting_cell.append(list(cell_up))
             # try go down
             if (maze[cell_down][1] == ' ' and
-                    maze[cell_down][0] == '-1'):
-
-                    maze[cell_down][1] = '^'
-                    maze[cell_down][0] = str(int(cell[0]) + 1)
-                    starting_cell.append(list(cell_down))
+                    maze[cell_down][0] == '-1'
+               ):
+                maze[cell_down][1] = '^'
+                maze[cell_down][0] = str(int(cell[0]) + 1)
+                starting_cell.append(list(cell_down))
             # try go left
             if (maze[cell_left][1] == ' ' and
-                    maze[cell_left][0] == '-1'):
-
-                    maze[cell_left][1] = '>'
-                    maze[cell_left][0] = str(int(cell[0]) + 1)
-                    starting_cell.append(list(cell_left))
+                    maze[cell_left][0] == '-1'
+               ):
+                maze[cell_left][1] = '>'
+                maze[cell_left][0] = str(int(cell[0]) + 1)
+                starting_cell.append(list(cell_left))
             # try go right
             if (maze[cell_right][1] == ' ' and
-                    maze[cell_right][0] == '-1'):
-
-                    maze[cell_right][1] = '<'
-                    maze[cell_right][0] = str(int(cell[0]) + 1)
-                    starting_cell.append(list(cell_right))
+                    maze[cell_right][0] == '-1'
+               ):
+                maze[cell_right][1] = '<'
+                maze[cell_right][0] = str(int(cell[0]) + 1)
+                starting_cell.append(list(cell_right))
     return Solution(maze)
