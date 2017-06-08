@@ -1,5 +1,7 @@
 # IDEs
 .vscode/
+.cache/
+.idea/
 *.so
 
 # cython analyzer files
