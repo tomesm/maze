@@ -3,98 +3,110 @@ import copy
 from numpy.random import random_integers as rand
 import matplotlib.pyplot as pyplot
 from .generator import generate_maze
+import queue
 
-class Solution():
+
+def up(maze, loc):
+    if loc[0] == 0:
+        raise ValueError
+    return loc[0] - 1, loc[1]
+
+
+def down(maze, loc):
+    if loc[0] == (maze.shape[0] - 1):
+        raise ValueError
+    return loc[0] + 1, loc[1]
+
+
+def left(maze, loc):
+    if loc[1] == 0:
+        raise ValueError
+    return loc[0], loc[1] - 1
+
+
+def right(maze, loc):
+    if loc[1] == (maze.shape[1] - 1):
+        raise ValueError
+    return loc[0], loc[1] + 1
+
+
+def ends(maze):
+    return numpy.asarray(numpy.where(maze == 1)).T
+
+
+DIRS = {
+    b'^': up,
+    b'<': left,
+    b'>': right,
+    b'v': down,
+}
+
+ANTIDIRS = {
+    down: b'^',
+    right: b'<',
+    left: b'>',
+    up: b'v'
+}
+
+
+def arrows_to_path(arrows, loc):
     """
-        Maze solution object
+    if arrows[loc] == b'#':
+        raise ValueError('Cannot construct path for wall')
+    if arrows[loc] == b' ':
+        raise ValueError('Cannot construct path for unreachable cell')
     """
+    path = [loc]
+
+    nloc = loc
+    while arrows[nloc] != b'X':
+        nloc = DIRS[arrows[nloc]](arrows, nloc)
+        path.append(nloc)
+
+    return path
+
+
+def flood(maze):
+    distances = numpy.full(maze.shape, -1, dtype=numpy.int)
+
+    # Initialize everything as walls
+    directions = numpy.full(maze.shape, b'#', dtype=('a', 1))
+    # Add spaces where there are no walls
+    directions[maze >= 0] = b' '
+
+    jobs = queue.Queue()
+    for end in ends(maze):
+        jobs.put((tuple(end), 0, b'X'))
+
+    while not jobs.empty():
+        loc, dist, char = jobs.get()
+        # It's a wall or we've been there better
+        if directions[loc] == b'#' or 0 <= distances[loc] <= dist:
+            continue
+        directions[loc] = char
+        distances[loc] = dist
+        for func in [up, left, right, down]:
+            try:
+                jobs.put((func(maze, loc), dist+1, ANTIDIRS[func]))
+            except ValueError:
+                # Out of matrix
+                pass
+
+    return distances, directions
+
+
+def is_reachable(arrows):
+    return b' ' not in arrows
+
+
+class AnalyzedMaze:
     def __init__(self, maze):
-        self.maze = maze
-        self.distances = self.maze[:, :, 0]
-        self.directions = self.maze[:, :, 1]
-        self.is_reachable = ' ' not in self.maze[:, :, 1]
+        self.distances, self.directions = flood(maze)
+        self.is_reachable = is_reachable(self.directions)
+
+    def path(self, column, row):
+        return arrows_to_path(self.directions, (column, row))
 
 
-    def path(self, row, column):
-        """ """
-        if self.maze[row, column, 1] == '#' or\
-                self.maze[row, column, 1] == ' ':
-            raise Exception("Cell not reachable.")
-
-        path = []
-        coordinates = (row, column)
-        while self.maze[coordinates][1] != 'X':
-            path.append(coordinates)
-            if self.maze[coordinates][1] == '>':
-                coordinates = (coordinates[0], coordinates[1]+1)
-            elif self.maze[coordinates][1] == '<':
-                coordinates = (coordinates[0], coordinates[1]-1)
-            elif self.maze[coordinates][1] == '^':
-                coordinates = (coordinates[0]-1, coordinates[1])
-            elif self.maze[coordinates][1] == 'v':
-                coordinates = (coordinates[0]+1, coordinates[1])
-        path.append(coordinates)
-        return path
-
-
-
-def analyze(array):
-    # create array of ASCII bytes
-    maze = numpy.empty(shape=(array.shape[0], array.shape[1], 2), dtype="<U15")
-    # fill the ASCII maze:
-    # fill walls
-    maze[(array == -1, 1)] = '#'
-    # fill paths
-    maze[(array == 0, 1)] = ' '
-    # set target
-    maze[(array == 1, 1)] = 'X'
-    # add default distances which marke all cells as not visited in the same
-    # time
-    maze[:, :, 0] = '-1'
-    # implementing Breadth-first algorithm, starting at target
-    # get location of target
-    target = numpy.where(maze == 'X')[:2]
-    # start traveling through maze
-    starting_cell = numpy.transpose(target)
-    while len(starting_cell):
-        current_cell = starting_cell
-        starting_cell = []
-        for coordinates in current_cell:
-            # get cell coordinates
-            cell = maze[coordinates[0], coordinates[1]]
-            # get surrounding cells positions
-            cell_up = (coordinates[0]-1, coordinates[1])
-            cell_down = (coordinates[0]+1, coordinates[1])
-            cell_right = (coordinates[0], coordinates[1]+1)
-            cell_left = (coordinates[0], coordinates[1]-1)
-            # now we check surrounding cells if they were visited before and
-            # are not walls in the same time
-            # first, try go up
-            if (maze[cell_up][1] == ' ' and  # is a path
-                    maze[cell_up][0] == '-1'
-               ):  # and not visited before
-                maze[cell_up][1] = 'v' # set direction
-                maze[cell_up][0] = str(int(cell[0]) + 1) # compute distance
-                starting_cell.append(list(cell_up))
-            # try go down
-            if (maze[cell_down][1] == ' ' and
-                    maze[cell_down][0] == '-1'
-               ):
-                maze[cell_down][1] = '^'
-                maze[cell_down][0] = str(int(cell[0]) + 1)
-                starting_cell.append(list(cell_down))
-            # try go left
-            if (maze[cell_left][1] == ' ' and
-                    maze[cell_left][0] == '-1'
-               ):
-                maze[cell_left][1] = '>'
-                maze[cell_left][0] = str(int(cell[0]) + 1)
-                starting_cell.append(list(cell_left))
-            # try go right
-            if (maze[cell_right][1] == ' ' and
-                    maze[cell_right][0] == '-1'
-               ):
-                maze[cell_right][1] = '<'
-                maze[cell_right][0] = str(int(cell[0]) + 1)
-                starting_cell.append(list(cell_right))
-    return Solution(maze)
+def analyze(maze):
+    return AnalyzedMaze(maze)

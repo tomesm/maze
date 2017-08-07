@@ -39,6 +39,8 @@ class GridWidget(QtWidgets.QWidget):
         super().__init__()
         self.array = array
         self.analyzed_maze = None
+        self.path = None
+        self._resize()
 
     def _resize(self):
         size = logical_to_pixels(*self.array.shape)
@@ -73,24 +75,31 @@ class GridWidget(QtWidgets.QWidget):
 
     def render_maze(self, row, column, painter, rect):
         """ Fills up the maze with walls, castle and arrows """
-        self.amaze = maze.solver.analyze(self.array)
+        self.analyzed_maze = maze.solver.analyze(self.array)
+        dude = None
         # basic maze and walls
         if self.array[row, column] < 0:
             SVG_WALL.render(painter, rect)
         if self.array[row, column] == 1:
             SVG_CASTLE.render(painter, rect)
 
-        if self.array[row, column] == 12:
+        if self.array[row, column] == 2:
             SVG_DUDE.render(painter, rect)
+            self.path = self.analyzed_maze.path(row, column)
+            dude = (row, column)
 
-        if self.amaze.directions[row, column] == '^':
-            SVG_UP.render(painter, rect)
-        if self.amaze.directions[row, column] == 'v':
-            SVG_DOWN.render(painter, rect)
-        if self.amaze.directions[row, column] == '>':
-            SVG_RIGHT.render(painter, rect)
-        if self.amaze.directions[row, column] == '<':
-            SVG_LEFT.render(painter, rect)
+        if self.analyzed_maze.directions[row, column] == b'^':
+            if self.path and (row, column) in self.path and (row, column) != dude:
+                SVG_UP.render(painter, rect)
+        if self.analyzed_maze.directions[row, column] == b'v':
+            if self.path and (row, column) in self.path and (row, column) != dude:
+                SVG_DOWN.render(painter, rect)
+        if self.analyzed_maze.directions[row, column] == b'>':
+            if self.path and (row, column) in self.path and (row, column) != dude:
+                SVG_RIGHT.render(painter, rect)
+        if self.analyzed_maze.directions[row, column] == b'<':
+            if self.path and (row, column) in self.path and (row, column) != dude:
+                SVG_LEFT.render(painter, rect)
 
     def mousePressEvent(self, event):
         row, column = pixels_to_logical(event.x(), event.y())
@@ -107,6 +116,7 @@ class GridWidget(QtWidgets.QWidget):
             self.update()
 
 
+
 class MazeGui(object):
     """ Class representing maze GUI """
     def __init__(self):
@@ -115,6 +125,7 @@ class MazeGui(object):
         self.window = window = QtWidgets.QMainWindow()  # set main GUI window
         self.array = maze.generator.generate_maze(COLUMNS, ROWS)
         self.new_dialog = None
+        self.path = None
 
         with open(get_filename('ui/MainWindow.ui')) as file:
             uic.loadUi(file, window)
@@ -122,19 +133,21 @@ class MazeGui(object):
         self.scroll_area = window.findChild(QtWidgets.QScrollArea, 'scrollArea')
         self.grid = grid = GridWidget(self.array)
         self.scroll_area.setWidget(grid)
-
         self.palette = window.findChild(QtWidgets.QListWidget, 'listWidget')
-        self._add_item('Grass', 'img/grass.svg', 0)
-        self._add_item('Wall', 'img/wall.svg', -1)
-        self._add_item('Dude1', 'img/dude1.svg', 12)
-        self.palette.itemSelectionChanged.connect(self._item_activated)
-        # v gridu musi byt nejaka prednastavena hodnota na zacatku
-        # prednastavime zed jako defaultni
-        self.palette.setCurrentRow(1)
+        self._fill_palette()
+        self.palette.itemSelectionChanged.connect(self._activate_item)
+        self.palette.setCurrentRow(1)  # set wall as default selection in the list
 
         self._action('actionNew').triggered.connect(self._new_dialog)
 
+    def _fill_palette(self):
+        """ Fill palette list with all the items """
+        self._add_item('Grass', 'img/grass.svg', 0)
+        self._add_item('Wall', 'img/wall.svg', -1)
+        self._add_item('Dude1', 'img/dude1.svg', 2)
+
     def _add_item(self, name, file, flag):
+        """ Add one item into the palette """
         item = QtWidgets.QListWidgetItem(name)
         icon = QtGui.QIcon(get_filename(file))
         item.setIcon(icon)
@@ -144,7 +157,8 @@ class MazeGui(object):
     def _action(self, name):
         return self.window.findChild(QtWidgets.QAction, name)
 
-    def _item_activated(self):
+    def _activate_item(self):
+        """ Activate an item selected byt a user"""
         for item in self.palette.selectedItems():
             self.grid.selected = item.data(VALUE_ROLE)
 
@@ -156,31 +170,22 @@ class MazeGui(object):
         with open(get_filename('ui/newmaze.ui')) as file:
             uic.loadUi(file, dialog)
 
-        dialog.show()
-        dialog.finished.connect(self._new_finished)
-
-    def _new_finished(self, result):
-        dialog = self.new_dialog
-        self.new_dialog = None
-        if not result:
+        if not dialog.exec():
             dialog.destroy()
             return
         # choose particular widget and call the value
         cols = dialog.findChild(QtWidgets.QSpinBox, 'spinWidth').value()
         rows = dialog.findChild(QtWidgets.QSpinBox, 'spinHeight').value()
         dialog.destroy()
-
         self.array = self.grid.array = maze.generator.generate_maze(cols, rows)
+        # re-draw the whole grid
         self.grid._resize()
 
     def run(self):
         self.window.show()
-        return self.app.exec_()
+        return self.app.exec()
 
 
 def main():
     gui = MazeGui()
     return gui.run()
-
-
-main()
